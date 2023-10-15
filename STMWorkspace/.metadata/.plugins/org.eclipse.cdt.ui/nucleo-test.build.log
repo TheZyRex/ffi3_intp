@@ -1,10 +1,10 @@
-17:07:07 **** Incremental Build of configuration Debug for project nucleo-test ****
+16:12:02 **** Incremental Build of configuration Debug for project nucleo-test ****
 make -j16 all 
 arm-none-eabi-size   nucleo-test.elf 
    text	   data	    bss	    dec	    hex	filename
-  24824	     24	  21776	  46624	   b620	nucleo-test.elf
+  25112	     24	  21776	  46912	   b740	nucleo-test.elf
 Finished building: default.size.stdout
  
 
-17:07:07 Build Finished. 0 errors, 0 warnings. (took 250ms)
+16:12:02 Build Finished. 0 errors, 0 warnings. (took 243ms)
 

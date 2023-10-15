@@ -32,7 +32,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -54,8 +53,14 @@ const osThreadAttr_t blinkyTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for blinkySWTimer */
+osTimerId_t blinkySWTimerHandle;
+const osTimerAttr_t blinkySWTimer_attributes = {
+  .name = "blinkySWTimer"
+};
 /* USER CODE BEGIN PV */
 volatile uint32_t ms_counter = 0;
+volatile uint8_t blinkyTrigger = 1;
 
 /* USER CODE END PV */
 
@@ -66,6 +71,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_TIM7_Init(void);
 void BlinkyLEDTask(void *argument);
+void blinkyCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -108,7 +114,10 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start(&htim7); // Enable TIM7
+
+  /* Enable TIM7 = TIM7->CR1 |= TIM_CR1_CEN */
+  HAL_TIM_Base_Start(&htim7);
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -121,6 +130,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
+
+  /* Create the timer(s) */
+  /* creation of blinkySWTimer */
+  //blinkySWTimerHandle = osTimerNew(blinkyCallback, osTimerPeriodic, NULL, &blinkySWTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -236,7 +249,9 @@ static void MX_TIM7_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM7_Init 2 */
-  /* Enable the TIM7 global interrupt */
+
+  /* enable the Update Interrupt Event */
+  __HAL_TIM_ENABLE_IT(&htim7, TIM_IT_UPDATE);
 
   /* USER CODE END TIM7_Init 2 */
 
@@ -381,14 +396,53 @@ void BlinkyLEDTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-	for (;;)
+  for (;;)
+  {
+
+	if ((ms_counter % 125) == 0)
 	{
-		if ((ms_counter % 1000) == 0)
-		{
-			HAL_GPIO_TogglePin(GPIOB, LD1_Pin | LD2_Pin | LD3_Pin);
-		}
+	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 	}
+
+	if (HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) != GPIO_PIN_RESET)
+    {
+      //if (!osTimerIsRunning(blinkySWTimerHandle))
+      //{
+        /* Start SWTimer as soon as user btn is pressed */
+    	/* 500 ticks are equal to 500ms as the tick rate of the RTOS kernel is set to 1KHz */
+		// osTimerStart(blinkySWTimerHandle, 500);
+      //}
+      /* SWTimer sets a flag every 500ms */
+      // if (blinkyTrigger)
+      // {
+        HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
+        osDelay(500);
+      //  blinkyTrigger = 0;
+      //}
+    }
+    else
+    {
+      /* Stop SWTimer */
+      //if (osTimerIsRunning(blinkySWTimerHandle))
+      //{
+      //  osTimerStop(blinkySWTimerHandle);
+      //}
+      //blinkyTrigger = true;
+      HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
+    }
+  }
   /* USER CODE END 5 */
+}
+
+/* blinkyCallback function */
+void blinkyCallback(void *argument)
+{
+  /* USER CODE BEGIN blinkyCallback */
+  //if (!blinkyTrigger)
+  {
+    blinkyTrigger = 1;
+  }
+  /* USER CODE END blinkyCallback */
 }
 
 /**
