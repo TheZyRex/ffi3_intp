@@ -1,0 +1,10 @@
+../Drivers/Display/Src/_mcpr_aufgabe3.c:13:6:mcpr_LCD_InitPorts	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:45:6:LCD_Output16BitWord	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:50:6:mcpr_LCD_Output16BitWord	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:65:6:mcpr_LCD_WriteData	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:99:6:mcpr_LCD_WriteCommand	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:132:6:mcpr_LCD_WriteReg	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:138:6:mcpr_LCD_Init	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:176:6:mcpr_LCD_SetCursor	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:184:6:mcpr_LCD_DrawPixel	1
+../Drivers/Display/Src/_mcpr_aufgabe3.c:190:6:mcpr_LCD_ClearDisplay	2
