@@ -133,7 +133,7 @@ int main(void)
 
   /* Create the timer(s) */
   /* creation of blinkySWTimer */
-  //blinkySWTimerHandle = osTimerNew(blinkyCallback, osTimerPeriodic, NULL, &blinkySWTimer_attributes);
+  blinkySWTimerHandle = osTimerNew(blinkyCallback, osTimerPeriodic, NULL, &blinkySWTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -242,7 +242,7 @@ static void MX_TIM7_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
   {
@@ -399,7 +399,7 @@ void BlinkyLEDTask(void *argument)
   for (;;)
   {
 
-	if ((ms_counter % 125) == 0)
+	if ((ms_counter % 500) == 0)
 	{
 	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 	}

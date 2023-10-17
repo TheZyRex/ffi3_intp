@@ -65,6 +65,7 @@ const osTimerAttr_t blinkySWTimer_attributes = {
 /* USER CODE BEGIN PV */
 
 volatile uint32_t ms_counter = 0;
+volatile uint8_t blinkyTrigger = 1;
 
 /* USER CODE END PV */
 
@@ -122,7 +123,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Enable TIM7 = TIM7->CR1 |= TIM_CR1_CEN */
-   HAL_TIM_Base_Start(&htim7);
+  HAL_TIM_Base_Start(&htim7);
 
   /* USER CODE END 2 */
 
@@ -143,6 +144,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  //osTimerStart(blinkySWTimerHandle, 500);
+
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -353,13 +356,15 @@ static void MX_TIM7_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM7_Init 2 */
+
+  __HAL_TIM_ENABLE_IT(&htim7, TIM_IT_UPDATE);
 
   /* USER CODE END TIM7_Init 2 */
 
@@ -489,11 +494,29 @@ void BlinkyLEDTask(void *argument)
 	  /* PD12 */
 	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_RESET)
 	  {
-	    HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-		osDelay(500);
+	    if (!osTimerIsRunning(blinkySWTimerHandle))
+		{
+		  /* Start SWTimer as soon as user btn is pressed */
+		  /* 500 ticks are equal to 500ms as the tick rate of the RTOS kernel is set to 1KHz */
+		  //osTimerStart(blinkySWTimerHandle, 500);
+		}
+		/* SWTimer sets a flag every 500ms */
+		if (blinkyTrigger)
+		{
+		  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+		  //osDelay(500);
+		  blinkyTrigger = 0;
+		}
+		//osDelay(500);
 	  }
 	  else
 	  {
+	    /* Stop SWTimer */
+		if (osTimerIsRunning(blinkySWTimerHandle))
+		{
+		  //osTimerStop(blinkySWTimerHandle);
+		}
+		//blinkyTrigger = 1;
 	    HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
 	  }
   }
@@ -504,7 +527,7 @@ void BlinkyLEDTask(void *argument)
 void blinkyTimerCallback(void *argument)
 {
   /* USER CODE BEGIN blinkyTimerCallback */
-
+  blinkyTrigger = 1;
   /* USER CODE END blinkyTimerCallback */
 }
 

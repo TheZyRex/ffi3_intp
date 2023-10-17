@@ -42,6 +42,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern volatile uint32_t ms_counter;
+extern volatile uint8_t blinykTrigger;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
