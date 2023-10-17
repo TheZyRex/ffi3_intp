@@ -1271,3 +1271,18 @@ java.lang.Exception: Resource '/thi-board' does not exist.
 
 !ENTRY org.eclipse.cdt.core 1 0 2023-10-16 19:54:58.799
 !MESSAGE Indexed 'thi-board' (49 sources, 161 headers) in 5.11 sec: 16,925 declarations; 97,813 references; 2 unresolved inclusions; 152 syntax errors; 148 unresolved names (0.13%)
+!SESSION 2023-10-17 09:33:54.156 -----------------------------------------------
+eclipse.buildId=Version 1.13.2
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=de_DE
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-10-17 09:35:10.692
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-10-17 09:35:10.707
+!MESSAGE Log4j2 initialized with config file D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-10-17 09:35:34.947
+!MESSAGE Started RMI Server, listening on port 41337

@@ -57,6 +57,11 @@ const osThreadAttr_t blinkyTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for blinkySWTimer */
+osTimerId_t blinkySWTimerHandle;
+const osTimerAttr_t blinkySWTimer_attributes = {
+  .name = "blinkySWTimer"
+};
 /* USER CODE BEGIN PV */
 
 volatile uint32_t ms_counter = 0;
@@ -71,6 +76,7 @@ static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM7_Init(void);
 void BlinkyLEDTask(void *argument);
+void blinkyTimerCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -130,6 +136,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
+
+  /* Create the timer(s) */
+  /* creation of blinkySWTimer */
+  blinkySWTimerHandle = osTimerNew(blinkyTimerCallback, osTimerPeriodic, NULL, &blinkySWTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -488,6 +498,14 @@ void BlinkyLEDTask(void *argument)
 	  }
   }
   /* USER CODE END 5 */
+}
+
+/* blinkyTimerCallback function */
+void blinkyTimerCallback(void *argument)
+{
+  /* USER CODE BEGIN blinkyTimerCallback */
+
+  /* USER CODE END blinkyTimerCallback */
 }
 
 /**
