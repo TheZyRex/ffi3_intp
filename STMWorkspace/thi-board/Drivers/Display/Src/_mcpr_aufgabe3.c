@@ -7,6 +7,7 @@
 //#include "fonts.h"
 #include "mcpr_timer.h"
 #include "_mcpr_aufgabe3.h"
+#include "fonts.h"
 #include "display.h"
 #include <stdio.h>
 
@@ -129,6 +130,7 @@ void mcpr_LCD_WriteCommand(uint16_t data) // wie das mit den delays is, keine Ah
 	// PD5 wieder auf LOW ziehen? Die Low-aktiven Steuerleitungen /RD, /WR und /CS muessen vor dem Reset deaktiviert werden (d.h. auf 1 gesetzt werden).
 	// GPIOD->ODR &= ~(1u<<5);	
 }
+
 void mcpr_LCD_WriteReg(uint16_t cmd, uint16_t data)
 {
 	mcpr_LCD_WriteCommand(cmd);
@@ -169,7 +171,7 @@ void mcpr_LCD_Init(void)
 	mcpr_LCD_WriteReg(0x0046, 320-1);
 	mcpr_LCD_WriteReg(0x004E, 0x0000); /*Set cursor to 0,0 */
 	mcpr_LCD_WriteReg(0x004F, 0x0000);
-	LCD_ClearDisplay(BACKGROUND); // Clear Display
+	mcpr_LCD_ClearDisplay(BACKGROUND); // Clear Display
 }
 
 // uint16_t, da die Koordinaten Register, garnicht groesser sind?
@@ -203,39 +205,39 @@ void mcpr_LCD_ClearDisplay(uint16_t color)
 	
 }
 
-//void mcpr_LCD_WriteLetter(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t colorbg, uint8_t c)
-//{
-//	int pix_byte = 0;
+void mcpr_LCD_WriteLetter(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t colorbg, uint8_t c)
+{
+	int pix_byte = 0;
 
-//	// setze initial den Cursor auf x y
-//	mcpr_LCD_SetCursor(x, y);
-//	
-//	for (uint8_t i = 0; i < 31; i++)
-//  {
-//		pix_byte = console_font_12x16[(32*(int)c)+i];
-//    for (uint8_t k = 8; k > 0; k--)
-//    {
-//			// Schreibe ein pixel mit der farbe fg wenn 1 und ein pixel mir farbe bg wenn 0
-//			// alternativ kann das umgeschrieben werden um nicht extra ein pixel zu schreiben wenn 0
-//			(pix_byte & (1<<(k-1))) ? mcpr_LCD_DrawPixel(colorfg) : mcpr_LCD_DrawPixel(colorbg);
-//    }
-//			// setze Cursor auf anfangs position x und inkrementiere y um 1 um in die naechste zeile zu springen
-//			if (i%2 != 0) 
-//				mcpr_LCD_SetCursor(x, y+=1);
-//	}
-//}
+	// setze initial den Cursor auf x y
+	mcpr_LCD_SetCursor(x, y);
 
-//void mcpr_LCD_WriteString(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t colorbg, char str[MAX_STR_LEN])
-//{
-//	while (*str != '\0')
-//	{
-//		mcpr_LCD_WriteLetter(x, y, colorfg, colorbg, *str);
-//		// naechster Buchstabe
-//		str+=1; 
-//		// springe ein Zeichen nach rechts
-//		x+=12; 
-//	}
-//}
+	for (uint8_t i = 0; i < 31; i++)
+  {
+		pix_byte = console_font_12x16[(32*(int)c)+i];
+    for (uint8_t k = 8; k > 0; k--)
+    {
+			// Schreibe ein pixel mit der farbe fg wenn 1 und ein pixel mir farbe bg wenn 0
+			// alternativ kann das umgeschrieben werden um nicht extra ein pixel zu schreiben wenn 0
+			(pix_byte & (1<<(k-1))) ? mcpr_LCD_DrawPixel(colorfg) : mcpr_LCD_DrawPixel(colorbg);
+    }
+			// setze Cursor auf anfangs position x und inkrementiere y um 1 um in die naechste zeile zu springen
+			if (i%2 != 0)
+				mcpr_LCD_SetCursor(x, y+=1);
+	}
+}
+
+void mcpr_LCD_WriteString(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t colorbg, char str[MAX_STR_LEN])
+{
+	while (*str != '\0')
+	{
+		mcpr_LCD_WriteLetter(x, y, colorfg, colorbg, *str);
+		// naechster Buchstabe
+		str+=1;
+		// springe ein Zeichen nach rechts
+		x+=12;
+	}
+}
 
 //__attribute__((noreturn)) void mcpr_DisplayMessung(void)
 //{

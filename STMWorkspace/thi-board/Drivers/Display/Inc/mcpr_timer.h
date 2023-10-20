@@ -17,9 +17,6 @@ extern volatile bool displayTrigger;
 extern volatile bool displayRefresh;
 extern volatile bool lauflichtTrigger;
 
-void TIM7_IRQHandler(void);
-void mcpr_setupTIM7(void);
-
 void TIM6_DAC_IRQHandler(void);
 void u_delay(uint16_t us);
 void m_delay(uint16_t ms);

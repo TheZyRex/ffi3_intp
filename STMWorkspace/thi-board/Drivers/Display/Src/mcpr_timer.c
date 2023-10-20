@@ -42,7 +42,7 @@ void u_delay(uint16_t us)
 	
 	while(TIM6->CR1 & TIM_CR1_CEN);
 	RCC->APB1ENR &= ~(1u<<4);
-	
+	NVIC_DisableIRQ(TIM6_DAC_IRQn);
 }
 
 void m_delay(uint16_t ms)
@@ -64,4 +64,5 @@ void m_delay(uint16_t ms)
 	
 	while(TIM6->CR1 & TIM_CR1_CEN);
 	RCC->APB1ENR &= ~(1u<<4);
+	NVIC_DisableIRQ(TIM6_DAC_IRQn);
 }

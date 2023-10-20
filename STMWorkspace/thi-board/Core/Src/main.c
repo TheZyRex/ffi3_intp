@@ -23,7 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "display.h"
+#include "_mcpr_aufgabe3.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,6 +49,7 @@ I2S_HandleTypeDef hi2s3;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim7;
 
 /* Definitions for blinkyTask */
@@ -57,6 +59,13 @@ const osThreadAttr_t blinkyTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for displayTask */
+osThreadId_t displayTaskHandle;
+const osThreadAttr_t displayTask_attributes = {
+  .name = "displayTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 /* Definitions for blinkySWTimer */
 osTimerId_t blinkySWTimerHandle;
 const osTimerAttr_t blinkySWTimer_attributes = {
@@ -65,7 +74,7 @@ const osTimerAttr_t blinkySWTimer_attributes = {
 /* USER CODE BEGIN PV */
 
 volatile uint32_t ms_counter = 0;
-volatile uint8_t blinkyTrigger = 1;
+volatile uint8_t pwm_trigger = 0;
 
 /* USER CODE END PV */
 
@@ -76,7 +85,9 @@ static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_TIM4_Init(void);
 void BlinkyLEDTask(void *argument);
+void StartDisplayTask(void *argument);
 void blinkyTimerCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -120,10 +131,13 @@ int main(void)
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_TIM7_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  mcpr_LCD_Init();
 
   /* Enable TIM7 = TIM7->CR1 |= TIM_CR1_CEN */
   HAL_TIM_Base_Start(&htim7);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
 
@@ -155,6 +169,9 @@ int main(void)
   /* Create the thread(s) */
   /* creation of blinkyTask */
   blinkyTaskHandle = osThreadNew(BlinkyLEDTask, NULL, &blinkyTask_attributes);
+
+  /* creation of displayTask */
+  displayTaskHandle = osThreadNew(StartDisplayTask, NULL, &displayTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -331,6 +348,55 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 102;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 4095;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
   * @brief TIM7 Initialization Function
   * @param None
   * @retval None
@@ -396,8 +462,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
-                          |Audio_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD5_Pin|LD6_Pin|Audio_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : CS_I2C_SPI_Pin */
   GPIO_InitStruct.Pin = CS_I2C_SPI_Pin;
@@ -441,10 +506,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
   HAL_GPIO_Init(CLK_IN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD4_Pin LD3_Pin LD5_Pin LD6_Pin
-                           Audio_RST_Pin */
-  GPIO_InitStruct.Pin = LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
-                          |Audio_RST_Pin;
+  /*Configure GPIO pins : LD4_Pin LD5_Pin LD6_Pin Audio_RST_Pin */
+  GPIO_InitStruct.Pin = LD4_Pin|LD5_Pin|LD6_Pin|Audio_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -482,53 +545,89 @@ void BlinkyLEDTask(void *argument)
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
+  //uint32_t newDutyCycle = 10000;
+  //uint8_t cnt = 1;
+  //__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
   /* Infinite loop */
   for(;;)
   {
-	  /* PD13 */
-	  if ((ms_counter % 125) == 0)
-	  {
-	    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-	  }
-
 	  /* PD12 */
 	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_RESET)
 	  {
-	    if (!osTimerIsRunning(blinkySWTimerHandle))
-		{
-		  /* Start SWTimer as soon as user btn is pressed */
-		  /* 500 ticks are equal to 500ms as the tick rate of the RTOS kernel is set to 1KHz */
-		  //osTimerStart(blinkySWTimerHandle, 500);
-		}
-		/* SWTimer sets a flag every 500ms */
-		if (blinkyTrigger)
-		{
-		  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-		  //osDelay(500);
-		  blinkyTrigger = 0;
-		}
-		//osDelay(500);
-	  }
-	  else
-	  {
-	    /* Stop SWTimer */
-		if (osTimerIsRunning(blinkySWTimerHandle))
-		{
-		  //osTimerStop(blinkySWTimerHandle);
-		}
-		//blinkyTrigger = 1;
-	    HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		//newDutyCycle = newDutyCycle * cnt;
+		//cnt = (cnt + 1) % 4;
 	  }
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartDisplayTask */
+/**
+* @brief Function implementing the displayTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartDisplayTask */
+void StartDisplayTask(void *argument)
+{
+  /* USER CODE BEGIN StartDisplayTask */
+  /* Infinite loop */
+
+  TIM4->CCR2 = 10000;
+  TIM4->CCMR1 |= (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2); //| TIM_CCMR1_OC2PE);	// PWM = 0b110
+  TIM4->CCER |= TIM_CCER_CC2E;	// TIM4: CH2 Output Compare aktiviert CH2 -> PD13
+  TIM4->CCR2 = 0; // Preload standardmaessig auf 0 setzen
+  for(;;)
+  {
+	uint16_t colorbg = 0xF800; // Rot
+    uint16_t colorfg = 0x0000;
+	// Hintergrund Beleuchtung einschalten
+    //HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+
+	for (uint8_t i = 0; i < 2; i++) {
+	  // toggle Pin PD12 (gruene LED) fuer Freq Messung
+	  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+
+	  mcpr_LCD_ClearDisplay(colorbg); // loesche das Display
+
+	  // gib einen Text aus
+	  mcpr_LCD_WriteString( 20, 220, colorfg, colorbg, "Hallo Welt!");
+
+	  // Wechsle Farbe
+	  colorfg = colorbg;
+	  colorbg = ~colorbg;
+    }
+  }
+  /* USER CODE END StartDisplayTask */
 }
 
 /* blinkyTimerCallback function */
 void blinkyTimerCallback(void *argument)
 {
   /* USER CODE BEGIN blinkyTimerCallback */
-  blinkyTrigger = 1;
+  //blinkyTrigger = 1;
   /* USER CODE END blinkyTimerCallback */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM8 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM8) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
 }
 
 /**

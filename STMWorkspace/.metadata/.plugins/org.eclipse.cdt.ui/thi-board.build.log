@@ -1,17 +1,26 @@
-15:24:35 **** Incremental Build of configuration Debug for project thi-board ****
+15:30:20 **** Incremental Build of configuration Debug for project thi-board ****
 make -j8 all 
-arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F407xx -c -I../Core/Inc -I"D:/02_IT/01_Coding/THI/ffi3_intp/STMWorkspace/thi-board/Drivers/Display/Inc" -I../USB_HOST/App -I../USB_HOST/Target -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I../Middlewares/ST/STM32_USB_Host_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
-arm-none-eabi-gcc -o "thi-board.elf" @"objects.list"   -mcpu=cortex-m4 -T"D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\thi-board\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="thi-board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F407xx -c -I../Drivers/Display/Inc -I../Core/Inc -I../USB_HOST/App -I../USB_HOST/Target -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I../Middlewares/ST/STM32_USB_Host_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'StartDisplayTask':
+../Core/Src/main.c:594:11: warning: 'mcpr_LCD_WriteString' accessing 20 bytes in a region of size 12 [-Wstringop-overflow=]
+  594 |           mcpr_LCD_WriteString( 20, 220, colorfg, colorbg, "Hallo Welt!");
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../Core/Src/main.c:594:11: note: referencing argument 5 of type 'char *'
+In file included from ../Core/Src/main.c:27:
+../Drivers/Display/Inc/_mcpr_aufgabe3.h:25:13: note: in a call to function 'mcpr_LCD_WriteString'
+   25 | extern void mcpr_LCD_WriteString(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t colorbg, char str[MAX_STR_LEN]);
+      |             ^~~~~~~~~~~~~~~~~~~~
+arm-none-eabi-gcc -o "thi-board.elf" @"objects.list"   -mcpu=cortex-m4 -T"D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\thi-board\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="thi-board.map" -Wl,--gc-sections -static -L../Drivers/Display/Inc --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 Finished building target: thi-board.elf
  
 arm-none-eabi-size   thi-board.elf 
 arm-none-eabi-objdump -h -S  thi-board.elf  > "thi-board.list"
    text	   data	    bss	    dec	    hex	filename
-  48220	    140	  22812	  71172	  11604	thi-board.elf
+  60868	    136	  23112	  84116	  14894	thi-board.elf
 Finished building: default.size.stdout
  
 Finished building: thi-board.list
  
 
-15:24:38 Build Finished. 0 errors, 0 warnings. (took 2s.685ms)
+15:30:22 Build Finished. 0 errors, 1 warnings. (took 1s.840ms)
 
