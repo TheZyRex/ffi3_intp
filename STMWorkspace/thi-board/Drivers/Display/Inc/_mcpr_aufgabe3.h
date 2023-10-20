@@ -7,8 +7,9 @@
 #define DISPLAY_HEIGHT 240
 #define MAX_STR_LEN 20
 
-#define BACKGROUND 0xFFFF
-#define BLACK 0x0000
+#define LCD_BACKGROUND 0xFFFF
+#define LCD_BLACK 0x0000
+#define LCD_WHITE 0x0000
 
 extern void mcpr_LCD_WriteData(uint16_t data);
 extern void mcpr_LCD_WriteCommand(uint16_t data);

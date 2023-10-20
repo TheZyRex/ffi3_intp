@@ -171,7 +171,7 @@ void mcpr_LCD_Init(void)
 	mcpr_LCD_WriteReg(0x0046, 320-1);
 	mcpr_LCD_WriteReg(0x004E, 0x0000); /*Set cursor to 0,0 */
 	mcpr_LCD_WriteReg(0x004F, 0x0000);
-	mcpr_LCD_ClearDisplay(BACKGROUND); // Clear Display
+	mcpr_LCD_ClearDisplay(LCD_BACKGROUND); // Clear Display
 }
 
 // uint16_t, da die Koordinaten Register, garnicht groesser sind?

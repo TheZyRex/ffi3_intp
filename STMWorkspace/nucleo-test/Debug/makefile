@@ -64,8 +64,8 @@ all: main-build
 main-build: nucleo-test.elf secondary-outputs
 
 # Tool invocations
-nucleo-test.elf nucleo-test.map: $(OBJS) $(USER_OBJS) D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\nucleo-test\STM32F413ZHTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "nucleo-test.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\nucleo-test\STM32F413ZHTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="nucleo-test.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+nucleo-test.elf nucleo-test.map: $(OBJS) $(USER_OBJS) I:\05_Coding\ffi3_intp\STMWorkspace\nucleo-test\STM32F413ZHTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "nucleo-test.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"I:\05_Coding\ffi3_intp\STMWorkspace\nucleo-test\STM32F413ZHTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="nucleo-test.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -40,7 +40,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart3;
 
@@ -53,14 +53,8 @@ const osThreadAttr_t blinkyTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for blinkySWTimer */
-osTimerId_t blinkySWTimerHandle;
-const osTimerAttr_t blinkySWTimer_attributes = {
-  .name = "blinkySWTimer"
-};
 /* USER CODE BEGIN PV */
-volatile uint32_t ms_counter = 0;
-volatile uint8_t blinkyTrigger = 1;
+volatile uint8_t buttonReleased = 1;
 
 /* USER CODE END PV */
 
@@ -69,9 +63,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
-static void MX_TIM7_Init(void);
+static void MX_TIM4_Init(void);
 void BlinkyLEDTask(void *argument);
-void blinkyCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -112,11 +105,11 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
-  MX_TIM7_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   /* Enable TIM7 = TIM7->CR1 |= TIM_CR1_CEN */
-  HAL_TIM_Base_Start(&htim7);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
 
@@ -130,10 +123,6 @@ int main(void)
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
-
-  /* Create the timer(s) */
-  /* creation of blinkySWTimer */
-  blinkySWTimerHandle = osTimerNew(blinkyCallback, osTimerPeriodic, NULL, &blinkySWTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -217,43 +206,51 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief TIM7 Initialization Function
+  * @brief TIM4 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM7_Init(void)
+static void MX_TIM4_Init(void)
 {
 
-  /* USER CODE BEGIN TIM7_Init 0 */
+  /* USER CODE BEGIN TIM4_Init 0 */
 
-  /* USER CODE END TIM7_Init 0 */
+  /* USER CODE END TIM4_Init 0 */
 
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
-  /* USER CODE BEGIN TIM7_Init 1 */
+  /* USER CODE BEGIN TIM4_Init 1 */
 
-  /* USER CODE END TIM7_Init 1 */
-  htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 99;
-  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim7.Init.Period = 999;
-  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 500;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 1000;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM7_Init 2 */
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 1000;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
 
-  /* enable the Update Interrupt Event */
-  __HAL_TIM_ENABLE_IT(&htim7, TIM_IT_UPDATE);
-
-  /* USER CODE END TIM7_Init 2 */
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
 
 }
 
@@ -346,7 +343,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
@@ -357,8 +354,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD1_Pin LD3_Pin LD2_Pin */
-  GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin|LD2_Pin;
+  /*Configure GPIO pins : LD1_Pin LD3_Pin */
+  GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -395,54 +392,73 @@ static void MX_GPIO_Init(void)
 void BlinkyLEDTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+  uint8_t cnt = 0;
+  uint32_t newDutyCycle = 0;
+
   /* Infinite loop */
   for (;;)
   {
 
-	if ((ms_counter % 500) == 0)
-	{
-	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-	}
+	if (HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) != GPIO_PIN_RESET && buttonReleased)
+    {
+		buttonReleased = 0;
+		/* continous count for chaning brightness */
+		cnt = (cnt + 1) % 4;
 
-	if (HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) != GPIO_PIN_RESET)
-    {
-      //if (!osTimerIsRunning(blinkySWTimerHandle))
-      //{
-        /* Start SWTimer as soon as user btn is pressed */
-    	/* 500 ticks are equal to 500ms as the tick rate of the RTOS kernel is set to 1KHz */
-		// osTimerStart(blinkySWTimerHandle, 500);
-      //}
-      /* SWTimer sets a flag every 500ms */
-      // if (blinkyTrigger)
-      // {
-        HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
-        osDelay(500);
-      //  blinkyTrigger = 0;
-      //}
+		switch (cnt)
+		{
+		case 0:
+			newDutyCycle = 1000;
+			break;
+
+		case 1:
+			newDutyCycle = 750;
+			break;
+
+		case 2:
+			newDutyCycle = 500;
+			break;
+
+		case 3:
+			newDutyCycle = 250;
+			break;
+
+		default:
+			newDutyCycle = 0;
+			break;
+		}
+
+		/* Set CCR2 Value */
+		__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
     }
-    else
-    {
-      /* Stop SWTimer */
-      //if (osTimerIsRunning(blinkySWTimerHandle))
-      //{
-      //  osTimerStop(blinkySWTimerHandle);
-      //}
-      //blinkyTrigger = true;
-      HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
-    }
+	else if (HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) == GPIO_PIN_RESET)
+	{
+		buttonReleased = 1;
+	}
+	osDelay(1);
   }
   /* USER CODE END 5 */
 }
 
-/* blinkyCallback function */
-void blinkyCallback(void *argument)
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* USER CODE BEGIN blinkyCallback */
-  //if (!blinkyTrigger)
-  {
-    blinkyTrigger = 1;
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6) {
+    HAL_IncTick();
   }
-  /* USER CODE END blinkyCallback */
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
 }
 
 /**

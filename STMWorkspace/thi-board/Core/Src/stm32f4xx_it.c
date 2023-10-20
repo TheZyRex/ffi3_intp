@@ -186,8 +186,6 @@ void TIM7_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim7);
   /* USER CODE BEGIN TIM7_IRQn 1 */
 
-  ms_counter += 1;
-
   /* USER CODE END TIM7_IRQn 1 */
 }
 

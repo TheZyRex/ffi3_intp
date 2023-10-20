@@ -25,15 +25,22 @@
 /* USER CODE BEGIN Includes */
 #include "display.h"
 #include "_mcpr_aufgabe3.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct log_queue_msg
+{
+  char msg_buf[MAX_STR_LEN];
+} log_msg_t;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define true 1
+#define false 0
 
 /* USER CODE END PD */
 
@@ -52,12 +59,12 @@ SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim7;
 
-/* Definitions for blinkyTask */
-osThreadId_t blinkyTaskHandle;
-const osThreadAttr_t blinkyTask_attributes = {
-  .name = "blinkyTask",
+/* Definitions for IOControl */
+osThreadId_t IOControlHandle;
+const osThreadAttr_t IOControl_attributes = {
+  .name = "IOControl",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for displayTask */
 osThreadId_t displayTaskHandle;
@@ -66,15 +73,15 @@ const osThreadAttr_t displayTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
-/* Definitions for blinkySWTimer */
-osTimerId_t blinkySWTimerHandle;
-const osTimerAttr_t blinkySWTimer_attributes = {
-  .name = "blinkySWTimer"
+/* Definitions for logQueue */
+osMessageQueueId_t logQueueHandle;
+const osMessageQueueAttr_t logQueue_attributes = {
+  .name = "logQueue"
 };
 /* USER CODE BEGIN PV */
 
 volatile uint32_t ms_counter = 0;
-volatile uint8_t pwm_trigger = 0;
+volatile uint8_t buttonReleased = false;
 
 /* USER CODE END PV */
 
@@ -86,9 +93,8 @@ static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM7_Init(void);
 static void MX_TIM4_Init(void);
-void BlinkyLEDTask(void *argument);
+void IOControlTask(void *argument);
 void StartDisplayTask(void *argument);
-void blinkyTimerCallback(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -152,23 +158,23 @@ int main(void)
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
-  /* Create the timer(s) */
-  /* creation of blinkySWTimer */
-  blinkySWTimerHandle = osTimerNew(blinkyTimerCallback, osTimerPeriodic, NULL, &blinkySWTimer_attributes);
-
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   //osTimerStart(blinkySWTimerHandle, 500);
 
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of logQueue */
+  logQueueHandle = osMessageQueueNew (16, sizeof(uint32_t), &logQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of blinkyTask */
-  blinkyTaskHandle = osThreadNew(BlinkyLEDTask, NULL, &blinkyTask_attributes);
+  /* creation of IOControl */
+  IOControlHandle = osThreadNew(IOControlTask, NULL, &IOControl_attributes);
 
   /* creation of displayTask */
   displayTaskHandle = osThreadNew(StartDisplayTask, NULL, &displayTask_attributes);
@@ -366,9 +372,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 102;
+  htim4.Init.Prescaler = 419;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 4095;
+  htim4.Init.Period = 1000;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -382,7 +388,7 @@ static void MX_TIM4_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 1000;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
@@ -533,30 +539,82 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_BlinkyLEDTask */
+/* USER CODE BEGIN Header_IOControlTask */
 /**
-  * @brief  Function implementing the blinkyTask thread.
+  * @brief  Function implementing the IOControl thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_BlinkyLEDTask */
-void BlinkyLEDTask(void *argument)
+/* USER CODE END Header_IOControlTask */
+void IOControlTask(void *argument)
 {
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
-  //uint32_t newDutyCycle = 10000;
-  //uint8_t cnt = 1;
-  //__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
+  uint8_t cnt = 0;
+  uint32_t newDutyCycle = 0;
+  log_msg_t log;
+
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
-	  /* PD12 */
-	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_RESET)
-	  {
-		//newDutyCycle = newDutyCycle * cnt;
-		//cnt = (cnt + 1) % 4;
-	  }
+
+    if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_RESET && buttonReleased)
+    {
+      /* Lock */
+  	  buttonReleased = false;
+
+  	  /* Clear message buffer */
+  	  memset((void*)log.msg_buf, 0, MAX_STR_LEN);
+
+  	  /* continous count for chaning brightness */
+      cnt = (cnt + 1) % 4;
+
+  	  switch (cnt)
+  	  {
+  		case 0:
+  			newDutyCycle = 1000;
+  			strcpy(log.msg_buf, "Brightness: 100%");
+  			break;
+
+  		case 1:
+  			newDutyCycle = 750;
+  			strcpy(log.msg_buf, "Brightness: 75%");
+  			break;
+
+  		case 2:
+  			newDutyCycle = 500;
+  			strcpy(log.msg_buf, "Brightness: 50%");
+  			break;
+
+  		case 3:
+  			newDutyCycle = 250;
+  			strcpy(log.msg_buf, "Brightness: 25%");
+  			break;
+
+  	    default:
+  			newDutyCycle = 0;
+  			strcpy(log.msg_buf, "Brightness: 0%");
+  			break;
+  	    }
+
+  	    /* Set CCR2 Value */
+  	    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
+
+  	    /* Add message to Queue */
+  	    if (osMessageQueuePut(logQueueHandle, (void*)&log, 0, osWaitForever) != osOK)
+  	    {
+  	    	/* Fehlerbehandlung */
+  	    }
+
+      }
+  	  else if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+  	  {
+  		if (!buttonReleased)
+  			buttonReleased = true;
+  	  }
+
+  	osDelay(1);
   }
   /* USER CODE END 5 */
 }
@@ -564,49 +622,45 @@ void BlinkyLEDTask(void *argument)
 /* USER CODE BEGIN Header_StartDisplayTask */
 /**
 * @brief Function implementing the displayTask thread.
-* @param argument: Not used
+* @param argument: Not use
 * @retval None
 */
 /* USER CODE END Header_StartDisplayTask */
 void StartDisplayTask(void *argument)
 {
   /* USER CODE BEGIN StartDisplayTask */
+  log_msg_t log;
+  osStatus_t status;
+  char buffer[MAX_STR_LEN];
   /* Infinite loop */
-
-  TIM4->CCR2 = 10000;
-  TIM4->CCMR1 |= (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2); //| TIM_CCMR1_OC2PE);	// PWM = 0b110
-  TIM4->CCER |= TIM_CCER_CC2E;	// TIM4: CH2 Output Compare aktiviert CH2 -> PD13
-  TIM4->CCR2 = 0; // Preload standardmaessig auf 0 setzen
   for(;;)
   {
-	uint16_t colorbg = 0xF800; // Rot
-    uint16_t colorfg = 0x0000;
-	// Hintergrund Beleuchtung einschalten
-    //HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+	  if (osMessageQueueGetCount(logQueueHandle) > 0)
+	  {
+		  /* Wipe Message Buffer */
+		  memset((void*)buffer, 0, 20);
 
-	for (uint8_t i = 0; i < 2; i++) {
-	  // toggle Pin PD12 (gruene LED) fuer Freq Messung
-	  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+		  status = osMessageQueueGet(logQueueHandle, (void*)&log, 0, osWaitForever);
 
-	  mcpr_LCD_ClearDisplay(colorbg); // loesche das Display
+		  if (status == osErrorTimeout)
+		  {
+			  strcpy(buffer, "Timeout");
+		  }
+		  else if (status != osOK)
+		  {
+			  strcpy(buffer, "Error reading Queue");
+		  }
 
-	  // gib einen Text aus
-	  mcpr_LCD_WriteString( 20, 220, colorfg, colorbg, "Hallo Welt!");
+		  strcpy(buffer, log.msg_buf);
 
-	  // Wechsle Farbe
-	  colorfg = colorbg;
-	  colorbg = ~colorbg;
-    }
+		  mcpr_LCD_ClearDisplay(LCD_BLACK);
+		  mcpr_LCD_WriteString(0, 220, LCD_WHITE, LCD_BLACK, "Task 1: ");
+		  mcpr_LCD_WriteString(20, 220, LCD_WHITE, LCD_BLACK, buffer);
+
+	  }
+
   }
   /* USER CODE END StartDisplayTask */
-}
-
-/* blinkyTimerCallback function */
-void blinkyTimerCallback(void *argument)
-{
-  /* USER CODE BEGIN blinkyTimerCallback */
-  //blinkyTrigger = 1;
-  /* USER CODE END blinkyTimerCallback */
 }
 
 /**
@@ -626,7 +680,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM7) {
+	  ms_counter += 1;
+  }
   /* USER CODE END Callback 1 */
 }
 

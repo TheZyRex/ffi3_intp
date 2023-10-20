@@ -69,8 +69,8 @@ all: main-build
 main-build: thi-board.elf secondary-outputs
 
 # Tool invocations
-thi-board.elf thi-board.map: $(OBJS) $(USER_OBJS) D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\thi-board\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "thi-board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\02_IT\01_Coding\THI\ffi3_intp\STMWorkspace\thi-board\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="thi-board.map" -Wl,--gc-sections -static -L../Drivers/Display/Inc --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+thi-board.elf thi-board.map: $(OBJS) $(USER_OBJS) I:\05_Coding\ffi3_intp\STMWorkspace\thi-board\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "thi-board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"I:\05_Coding\ffi3_intp\STMWorkspace\thi-board\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="thi-board.map" -Wl,--gc-sections -static -L../Drivers/Display/Inc --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
