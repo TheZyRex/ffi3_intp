@@ -1621,3 +1621,18 @@ Command-line arguments:  -os win32 -ws win32 -arch x86_64 I:\05_Coding\ffi3_intp
 
 !ENTRY org.eclipse.cdt.core 1 0 2023-10-20 14:17:04.426
 !MESSAGE Indexed 'thi-board' (50 sources, 163 headers) in 4.77 sec: 17,085 declarations; 98,319 references; 2 unresolved inclusions; 152 syntax errors; 148 unresolved names (0.13%)
+!SESSION 2023-10-21 16:25:52.586 -----------------------------------------------
+eclipse.buildId=Version 1.13.2
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=de_DE
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-10-21 16:26:06.302
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-10-21 16:26:06.307
+!MESSAGE Log4j2 initialized with config file I:\05_Coding\ffi3_intp\STMWorkspace\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-10-21 16:26:14.693
+!MESSAGE Started RMI Server, listening on port 41337

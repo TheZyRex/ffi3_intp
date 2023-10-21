@@ -126,6 +126,8 @@ void Error_Handler(void);
 #define MEMS_INT2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+#define true 1
+#define false 0
 
 /* USER CODE END Private defines */
 

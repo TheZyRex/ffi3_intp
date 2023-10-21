@@ -33,14 +33,22 @@
 typedef struct log_queue_msg
 {
   char msg_buf[MAX_STR_LEN];
+  osThreadId_t threadId;
+  uint8_t prio;
 } log_msg_t;
+
+typedef enum msg_prio
+{
+	PRIO_HIGH,
+	PRIO_LOW,
+	PRIO_NORM,
+} msg_prio_t;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define true 1
-#define false 0
+
 
 /* USER CODE END PD */
 
@@ -567,7 +575,7 @@ void IOControlTask(void *argument)
   	  /* Clear message buffer */
   	  memset((void*)log.msg_buf, 0, MAX_STR_LEN);
 
-  	  /* continous count for chaning brightness */
+  	  /* continuous count for changing brightness */
       cnt = (cnt + 1) % 4;
 
   	  switch (cnt)
@@ -631,34 +639,64 @@ void StartDisplayTask(void *argument)
   /* USER CODE BEGIN StartDisplayTask */
   log_msg_t log;
   osStatus_t status;
-  char buffer[MAX_STR_LEN];
+  char task1_buf[MAX_STR_LEN], task2_buf[MAX_STR_LEN];
+
   /* Infinite loop */
   for(;;)
   {
 	  if (osMessageQueueGetCount(logQueueHandle) > 0)
 	  {
-		  /* Wipe Message Buffer */
-		  memset((void*)buffer, 0, 20);
-
 		  status = osMessageQueueGet(logQueueHandle, (void*)&log, 0, osWaitForever);
 
-		  if (status == osErrorTimeout)
+		  /* Message was received successfully and stored in log */
+		  if (status == osOK)
 		  {
-			  strcpy(buffer, "Timeout");
+			  switch (log.threadId)
+			  {
+			  case IOControlHandle:
+				  mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
+				  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
+				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, log.msg_buf);
+
+				  break;
+
+			  default:
+				  break;
+			  }
+
+			  if (log.prio == PRIO_HIGH)
+			  {
+
+			  }
+
 		  }
-		  else if (status != osOK)
+		  else if (status == osErrorTimeout)
 		  {
-			  strcpy(buffer, "Error reading Queue");
+			  /* Error Handling */
+			  /* Should not occur when timeout is set to osWaitForever */
+		  }
+		  else
+		  {
+			  /* Error Handling */
 		  }
 
-		  strcpy(buffer, log.msg_buf);
 
+		  /* Every time a new message is received, clear the display to prevent fragments */
 		  mcpr_LCD_ClearDisplay(LCD_BLACK);
-		  mcpr_LCD_WriteString(0, 220, LCD_WHITE, LCD_BLACK, "Task 1: ");
-		  mcpr_LCD_WriteString(20, 220, LCD_WHITE, LCD_BLACK, buffer);
 
+		  /* Write Task 1 to screen */
+		  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
+		  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, task1_buf);
+
+		  /* Write Task 2 to screen */
+		  mcpr_LCD_WriteString(10, 140, LCD_WHITE, LCD_BLACK, "Task 2: ");
+		  mcpr_LCD_WriteString(130, 140, LCD_WHITE, LCD_BLACK, task2_buf);
+
+		  /* Write Task 3 to screen */
 	  }
 
+	  /* 25 Hz Refresh Rate */
+	  osDelay(40);
   }
   /* USER CODE END StartDisplayTask */
 }

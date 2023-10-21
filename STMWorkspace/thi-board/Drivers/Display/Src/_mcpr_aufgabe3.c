@@ -202,7 +202,18 @@ void mcpr_LCD_ClearDisplay(uint16_t color)
 	{
 		mcpr_LCD_DrawPixel(color);
 	}
+}
+
+void mcpr_LCD_ClearLine(uint16_t y_begin, uint16_t y_end, uint16_t color)
+{
+	mcpr_LCD_SetCursor(0x0, y_begin);
 	
+	mcpr_LCD_DrawPixel(color);
+
+	for (uint32_t i = 0; i < DISPLAY_WIDTH*(y_end-y_begin); i++)
+	{
+		mcpr_LCD_WriteCommand(0x0022);
+	}
 }
 
 void mcpr_LCD_WriteLetter(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t colorbg, uint8_t c)
@@ -213,17 +224,18 @@ void mcpr_LCD_WriteLetter(uint16_t x, uint16_t y, uint16_t colorfg, uint16_t col
 	mcpr_LCD_SetCursor(x, y);
 
 	for (uint8_t i = 0; i < 31; i++)
-  {
+	{
 		pix_byte = console_font_12x16[(32*(int)c)+i];
-    for (uint8_t k = 8; k > 0; k--)
-    {
+		for (uint8_t k = 8; k > 0; k--)
+		{
 			// Schreibe ein pixel mit der farbe fg wenn 1 und ein pixel mir farbe bg wenn 0
 			// alternativ kann das umgeschrieben werden um nicht extra ein pixel zu schreiben wenn 0
 			(pix_byte & (1<<(k-1))) ? mcpr_LCD_DrawPixel(colorfg) : mcpr_LCD_DrawPixel(colorbg);
-    }
-			// setze Cursor auf anfangs position x und inkrementiere y um 1 um in die naechste zeile zu springen
-			if (i%2 != 0)
-				mcpr_LCD_SetCursor(x, y+=1);
+		}
+
+		// setze Cursor auf anfangs position x und inkrementiere y um 1 um in die naechste zeile zu springen
+		if (i%2 != 0)
+			mcpr_LCD_SetCursor(x, y+=1);
 	}
 }
 
