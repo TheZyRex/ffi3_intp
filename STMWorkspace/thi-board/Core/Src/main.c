@@ -664,11 +664,6 @@ void StartDisplayTask(void *argument)
 				  break;
 			  }
 
-			  if (log.prio == PRIO_HIGH)
-			  {
-
-			  }
-
 		  }
 		  else if (status == osErrorTimeout)
 		  {
@@ -682,15 +677,19 @@ void StartDisplayTask(void *argument)
 
 
 		  /* Every time a new message is received, clear the display to prevent fragments */
-		  mcpr_LCD_ClearDisplay(LCD_BLACK);
+		  //mcpr_LCD_ClearDisplay(LCD_BLACK);
 
 		  /* Write Task 1 to screen */
+		  /*
 		  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
 		  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, task1_buf);
+		  */
 
 		  /* Write Task 2 to screen */
+		  /*
 		  mcpr_LCD_WriteString(10, 140, LCD_WHITE, LCD_BLACK, "Task 2: ");
 		  mcpr_LCD_WriteString(130, 140, LCD_WHITE, LCD_BLACK, task2_buf);
+		  */
 
 		  /* Write Task 3 to screen */
 	  }
