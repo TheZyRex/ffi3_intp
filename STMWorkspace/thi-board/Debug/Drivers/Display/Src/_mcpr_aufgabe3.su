@@ -8,5 +8,6 @@
 ../Drivers/Display/Src/_mcpr_aufgabe3.c:178:6:mcpr_LCD_SetCursor	16	static
 ../Drivers/Display/Src/_mcpr_aufgabe3.c:186:6:mcpr_LCD_DrawPixel	16	static
 ../Drivers/Display/Src/_mcpr_aufgabe3.c:192:6:mcpr_LCD_ClearDisplay	24	static
-../Drivers/Display/Src/_mcpr_aufgabe3.c:208:6:mcpr_LCD_WriteLetter	32	static
-../Drivers/Display/Src/_mcpr_aufgabe3.c:230:6:mcpr_LCD_WriteString	32	static
+../Drivers/Display/Src/_mcpr_aufgabe3.c:207:6:mcpr_LCD_ClearLine	24	static
+../Drivers/Display/Src/_mcpr_aufgabe3.c:219:6:mcpr_LCD_WriteLetter	32	static
+../Drivers/Display/Src/_mcpr_aufgabe3.c:242:6:mcpr_LCD_WriteString	32	static

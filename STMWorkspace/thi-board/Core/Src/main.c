@@ -373,6 +373,7 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -385,6 +386,15 @@ static void MX_TIM4_Init(void)
   htim4.Init.Period = 1000;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
   {
     Error_Handler();
@@ -573,7 +583,7 @@ void IOControlTask(void *argument)
   	  buttonReleased = false;
 
   	  /* Clear message buffer */
-  	  memset((void*)log.msg_buf, 0, MAX_STR_LEN);
+  	  //memset((void*)log.msg_buf, 0, MAX_STR_LEN);
 
   	  /* continuous count for changing brightness */
       cnt = (cnt + 1) % 4;
@@ -582,27 +592,27 @@ void IOControlTask(void *argument)
   	  {
   		case 0:
   			newDutyCycle = 1000;
-  			strcpy(log.msg_buf, "Brightness: 100%");
+  			//strcpy(log.msg_buf, "Brightness: 100%");
   			break;
 
   		case 1:
   			newDutyCycle = 750;
-  			strcpy(log.msg_buf, "Brightness: 75%");
+  			//strcpy(log.msg_buf, "Brightness: 75%");
   			break;
 
   		case 2:
   			newDutyCycle = 500;
-  			strcpy(log.msg_buf, "Brightness: 50%");
+  			//strcpy(log.msg_buf, "Brightness: 50%");
   			break;
 
   		case 3:
   			newDutyCycle = 250;
-  			strcpy(log.msg_buf, "Brightness: 25%");
+  			//strcpy(log.msg_buf, "Brightness: 25%");
   			break;
 
   	    default:
   			newDutyCycle = 0;
-  			strcpy(log.msg_buf, "Brightness: 0%");
+  			//strcpy(log.msg_buf, "Brightness: 0%");
   			break;
   	    }
 
@@ -610,7 +620,7 @@ void IOControlTask(void *argument)
   	    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
 
   	    /* Add message to Queue */
-  	    if (osMessageQueuePut(logQueueHandle, (void*)&log, 0, osWaitForever) != osOK)
+  	    if (osMessageQueuePut(logQueueHandle, (void*)&log, 0, 100) != osOK)
   	    {
   	    	/* Fehlerbehandlung */
   	    }
@@ -639,30 +649,30 @@ void StartDisplayTask(void *argument)
   /* USER CODE BEGIN StartDisplayTask */
   log_msg_t log;
   osStatus_t status;
-  char task1_buf[MAX_STR_LEN], task2_buf[MAX_STR_LEN];
+  //char task1_buf[MAX_STR_LEN], task2_buf[MAX_STR_LEN];
 
   /* Infinite loop */
   for(;;)
   {
 	  if (osMessageQueueGetCount(logQueueHandle) > 0)
 	  {
-		  status = osMessageQueueGet(logQueueHandle, (void*)&log, 0, osWaitForever);
+		  status = osMessageQueueGet(logQueueHandle, (void*)&log, 0, 100);
 
 		  /* Message was received successfully and stored in log */
 		  if (status == osOK)
 		  {
-			  switch (log.threadId)
-			  {
-			  case IOControlHandle:
-				  mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
+			  //switch (log.threadId)
+			  //{
+			  //case IOControlHandle:
+				  mcpr_LCD_ClearDisplay(LCD_BLACK);
 				  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
 				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, log.msg_buf);
 
-				  break;
+				//  break;
 
-			  default:
-				  break;
-			  }
+			  //default:
+				//  break;
+			  //}
 
 		  }
 		  else if (status == osErrorTimeout)
