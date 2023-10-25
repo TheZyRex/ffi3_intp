@@ -26,6 +26,7 @@
 #include "display.h"
 #include "_mcpr_aufgabe3.h"
 #include "string.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,9 +34,9 @@
 typedef struct log_queue_msg
 {
   char msg_buf[MAX_STR_LEN];
-  osThreadId_t threadId;
+  char threadName[MAX_STR_LEN];
   uint8_t prio;
-} log_msg_t;
+} ThreadInfo;
 
 typedef enum msg_prio
 {
@@ -81,13 +82,19 @@ const osThreadAttr_t displayTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for myTask03 */
+osThreadId_t myTask03Handle;
+const osThreadAttr_t myTask03_attributes = {
+  .name = "myTask03",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for logQueue */
 osMessageQueueId_t logQueueHandle;
 const osMessageQueueAttr_t logQueue_attributes = {
   .name = "logQueue"
 };
 /* USER CODE BEGIN PV */
-
 volatile uint32_t ms_counter = 0;
 volatile uint8_t buttonReleased = false;
 
@@ -99,10 +106,11 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_TIM7_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM7_Init(void);
 void IOControlTask(void *argument);
 void StartDisplayTask(void *argument);
+void StartTask03(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -136,6 +144,10 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  /* GPIO Modifications done here, will be
+   * overwritten by following init procedures
+   */
+  mcpr_LCD_Init();
 
   /* USER CODE END SysInit */
 
@@ -144,12 +156,9 @@ int main(void)
   MX_I2C1_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
-  MX_TIM7_Init();
   MX_TIM4_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
-  mcpr_LCD_Init();
-
-  /* Enable TIM7 = TIM7->CR1 |= TIM_CR1_CEN */
   HAL_TIM_Base_Start(&htim7);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
@@ -168,7 +177,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
-  //osTimerStart(blinkySWTimerHandle, 500);
 
   /* USER CODE END RTOS_TIMERS */
 
@@ -186,6 +194,9 @@ int main(void)
 
   /* creation of displayTask */
   displayTaskHandle = osThreadNew(StartDisplayTask, NULL, &displayTask_attributes);
+
+  /* creation of myTask03 */
+  myTask03Handle = osThreadNew(StartTask03, NULL, &myTask03_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -383,7 +394,7 @@ static void MX_TIM4_Init(void)
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 419;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 1000;
+  htim4.Init.Period = 999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
@@ -406,7 +417,7 @@ static void MX_TIM4_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1000;
+  sConfigOC.Pulse = 999;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
@@ -453,8 +464,6 @@ static void MX_TIM7_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM7_Init 2 */
-
-  __HAL_TIM_ENABLE_IT(&htim7, TIM_IT_UPDATE);
 
   /* USER CODE END TIM7_Init 2 */
 
@@ -571,7 +580,10 @@ void IOControlTask(void *argument)
   /* USER CODE BEGIN 5 */
   uint8_t cnt = 0;
   uint32_t newDutyCycle = 0;
-  log_msg_t log;
+  ThreadInfo tInfo;
+
+  /* RFC 1925 2.1: "It Has To Work" */
+  strcpy(tInfo.threadName, osThreadGetName(osThreadGetId()));
 
   /* Infinite loop */
   for (;;)
@@ -583,7 +595,7 @@ void IOControlTask(void *argument)
   	  buttonReleased = false;
 
   	  /* Clear message buffer */
-  	  //memset((void*)log.msg_buf, 0, MAX_STR_LEN);
+  	  memset((void*)tInfo.msg_buf, 0, MAX_STR_LEN);
 
   	  /* continuous count for changing brightness */
       cnt = (cnt + 1) % 4;
@@ -592,27 +604,27 @@ void IOControlTask(void *argument)
   	  {
   		case 0:
   			newDutyCycle = 1000;
-  			//strcpy(log.msg_buf, "Brightness: 100%");
+  			strcpy(tInfo.msg_buf, "Brightness: 100%");
   			break;
 
   		case 1:
   			newDutyCycle = 750;
-  			//strcpy(log.msg_buf, "Brightness: 75%");
+  			strcpy(tInfo.msg_buf, "Brightness: 75%");
   			break;
 
   		case 2:
   			newDutyCycle = 500;
-  			//strcpy(log.msg_buf, "Brightness: 50%");
+  			strcpy(tInfo.msg_buf, "Brightness: 50%");
   			break;
 
   		case 3:
   			newDutyCycle = 250;
-  			//strcpy(log.msg_buf, "Brightness: 25%");
+  			strcpy(tInfo.msg_buf, "Brightness: 25%");
   			break;
 
   	    default:
   			newDutyCycle = 0;
-  			//strcpy(log.msg_buf, "Brightness: 0%");
+  			strcpy(tInfo.msg_buf, "Brightness: 0%");
   			break;
   	    }
 
@@ -620,9 +632,9 @@ void IOControlTask(void *argument)
   	    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
 
   	    /* Add message to Queue */
-  	    if (osMessageQueuePut(logQueueHandle, (void*)&log, 0, 100) != osOK)
+  	    if (osMessageQueuePut(logQueueHandle, (void*)&tInfo, 0, 100) != osOK)
   	    {
-  	    	/* Fehlerbehandlung */
+  	    	/* Error Handling */
   	    }
 
       }
@@ -631,7 +643,6 @@ void IOControlTask(void *argument)
   		if (!buttonReleased)
   			buttonReleased = true;
   	  }
-
   	osDelay(1);
   }
   /* USER CODE END 5 */
@@ -647,33 +658,34 @@ void IOControlTask(void *argument)
 void StartDisplayTask(void *argument)
 {
   /* USER CODE BEGIN StartDisplayTask */
-  log_msg_t log;
+  ThreadInfo tInfo;
   osStatus_t status;
-  //char task1_buf[MAX_STR_LEN], task2_buf[MAX_STR_LEN];
 
   /* Infinite loop */
   for(;;)
   {
 	  if (osMessageQueueGetCount(logQueueHandle) > 0)
 	  {
-		  status = osMessageQueueGet(logQueueHandle, (void*)&log, 0, 100);
+		  status = osMessageQueueGet(logQueueHandle, (void*)&tInfo, 0, 100);
 
 		  /* Message was received successfully and stored in log */
 		  if (status == osOK)
 		  {
-			  //switch (log.threadId)
-			  //{
-			  //case IOControlHandle:
-				  mcpr_LCD_ClearDisplay(LCD_BLACK);
+			  /* A message was received from IOControl Thread */
+			  if (strcmp(tInfo.threadName, displayTask_attributes.name))
+			  {
+				  /* Task1 will be printed on y: 100 to 120*/
+				  mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
 				  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
-				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, log.msg_buf);
-
-				//  break;
-
-			  //default:
-				//  break;
-			  //}
-
+				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
+			  }
+			  else if (strcmp(tInfo.threadName, myTask03_attributes.name))
+			  {
+				  /* Task1 will be printed on y: 140 to 160*/
+				  mcpr_LCD_ClearLine(140, 160, LCD_BLACK);
+				  mcpr_LCD_WriteString(10, 140, LCD_WHITE, LCD_BLACK, "Task 2: ");
+				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
+			  }
 		  }
 		  else if (status == osErrorTimeout)
 		  {
@@ -684,30 +696,47 @@ void StartDisplayTask(void *argument)
 		  {
 			  /* Error Handling */
 		  }
-
-
-		  /* Every time a new message is received, clear the display to prevent fragments */
-		  //mcpr_LCD_ClearDisplay(LCD_BLACK);
-
-		  /* Write Task 1 to screen */
-		  /*
-		  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
-		  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, task1_buf);
-		  */
-
-		  /* Write Task 2 to screen */
-		  /*
-		  mcpr_LCD_WriteString(10, 140, LCD_WHITE, LCD_BLACK, "Task 2: ");
-		  mcpr_LCD_WriteString(130, 140, LCD_WHITE, LCD_BLACK, task2_buf);
-		  */
-
-		  /* Write Task 3 to screen */
 	  }
-
-	  /* 25 Hz Refresh Rate */
-	  osDelay(40);
+	  /* 25 Hz Refresh Rate - FreeRTOS clock rate: 1000Hz */
+	  osDelay(pdMS_TO_TICKS(40));
   }
   /* USER CODE END StartDisplayTask */
+}
+
+/* USER CODE BEGIN Header_StartTask03 */
+/**
+* @brief Function implementing the myTask03 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask03 */
+void StartTask03(void *argument)
+{
+  /* USER CODE BEGIN StartTask03 */
+  ThreadInfo tInfo;
+
+  /* RFC 1925 2.1: "It Has To Work" */
+  strcpy(tInfo.threadName, osThreadGetName(osThreadGetId()));
+
+  /* Infinite loop */
+  for(;;)
+  {
+	  /* Clear message buffer */
+	  memset((void*)tInfo.msg_buf, 0, MAX_STR_LEN);
+
+	  /* Write message into buffer */
+	  snprintf(tInfo.msg_buf, MAX_STR_LEN, "ms_counter: %ld", ms_counter);
+
+	  /* Add message to Queue */
+	  if (osMessageQueuePut(logQueueHandle, (void*)&tInfo, 0, 100) != osOK)
+	  {
+		  /* Error Handling */
+	  }
+
+	  /* let this task run every 1000ms */
+	  osDelay(pdMS_TO_TICKS(1000));
+  }
+  /* USER CODE END StartTask03 */
 }
 
 /**
