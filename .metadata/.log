@@ -311,3 +311,22 @@ org.eclipse.core.runtime.CoreException: Setup exceptions
 	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
 !SUBENTRY 1 com.st.stm32cube.ide.mcu.debug.launch 4 0 2023-10-25 19:06:18.600
 !MESSAGE Setup exceptions
+!SESSION 2023-10-28 15:47:05.030 -----------------------------------------------
+eclipse.buildId=Version 1.13.2
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=de_DE
+Framework arguments:  I:\05_Coding\ffi3_intp\STMWorkspace\thi-board\.project
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 I:\05_Coding\ffi3_intp\STMWorkspace\thi-board\.project
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-10-28 15:47:19.425
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-10-28 15:47:19.430
+!MESSAGE Log4j2 initialized with config file I:\05_Coding\ffi3_intp\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-10-28 15:47:31.989
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2023-10-28 15:47:38.405
+!MESSAGE Indexed 'thi-board' (50 sources, 163 headers) in 6 sec: 17,107 declarations; 98,458 references; 2 unresolved inclusions; 152 syntax errors; 148 unresolved names (0.13%)

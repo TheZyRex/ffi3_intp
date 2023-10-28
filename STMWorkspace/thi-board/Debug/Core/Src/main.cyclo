@@ -5,9 +5,9 @@
 ../Core/Src/main.c:342:13:MX_SPI1_Init	2
 ../Core/Src/main.c:380:13:MX_TIM4_Init	6
 ../Core/Src/main.c:439:13:MX_TIM7_Init	3
-../Core/Src/main.c:477:13:MX_GPIO_Init	1
-../Core/Src/main.c:576:6:IOControlTask	9
-../Core/Src/main.c:658:6:StartDisplayTask	5
-../Core/Src/main.c:713:6:StartTask03	1
-../Core/Src/main.c:750:6:HAL_TIM_PeriodElapsedCallback	3
-../Core/Src/main.c:769:6:Error_Handler	1
+../Core/Src/main.c:479:13:MX_GPIO_Init	1
+../Core/Src/main.c:578:6:IOControlTask	9
+../Core/Src/main.c:660:6:StartDisplayTask	5
+../Core/Src/main.c:715:6:StartTask03	1
+../Core/Src/main.c:752:6:HAL_TIM_PeriodElapsedCallback	3
+../Core/Src/main.c:771:6:Error_Handler	1

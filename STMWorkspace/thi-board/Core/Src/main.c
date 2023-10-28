@@ -182,7 +182,7 @@ int main(void)
 
   /* Create the queue(s) */
   /* creation of logQueue */
-  logQueueHandle = osMessageQueueNew (16, sizeof(uint32_t), &logQueue_attributes);
+  logQueueHandle = osMessageQueueNew (16, sizeof(ThreadInfo), &logQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -465,6 +465,8 @@ static void MX_TIM7_Init(void)
   }
   /* USER CODE BEGIN TIM7_Init 2 */
 
+  /* Set UIE Flag - trigger interrupt on ARR overflow */
+  __HAL_TIM_ENABLE_IT(&htim7, TIM_IT_UPDATE);
   /* USER CODE END TIM7_Init 2 */
 
 }
@@ -672,14 +674,14 @@ void StartDisplayTask(void *argument)
 		  if (status == osOK)
 		  {
 			  /* A message was received from IOControl Thread */
-			  if (strcmp(tInfo.threadName, displayTask_attributes.name))
+			  if (strcmp(tInfo.threadName, displayTask_attributes.name) == 0)
 			  {
 				  /* Task1 will be printed on y: 100 to 120*/
 				  mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
 				  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
 				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
 			  }
-			  else if (strcmp(tInfo.threadName, myTask03_attributes.name))
+			  else if (strcmp(tInfo.threadName, myTask03_attributes.name) == 0)
 			  {
 				  /* Task1 will be printed on y: 140 to 160*/
 				  mcpr_LCD_ClearLine(140, 160, LCD_BLACK);
