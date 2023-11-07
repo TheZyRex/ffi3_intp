@@ -147,7 +147,6 @@ int main(void)
   /* GPIO Modifications done here, will be
    * overwritten by following init procedures
    */
-  mcpr_LCD_Init();
 
   /* USER CODE END SysInit */
 
@@ -159,6 +158,8 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+  mcpr_LCD_Init();
+
   HAL_TIM_Base_Start(&htim7);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
@@ -606,27 +607,27 @@ void IOControlTask(void *argument)
   	  {
   		case 0:
   			newDutyCycle = 1000;
-  			strcpy(tInfo.msg_buf, "Brightness: 100%");
+  			strncpy(tInfo.msg_buf, "Brightness: 100%", MAX_STR_LEN);
   			break;
 
   		case 1:
   			newDutyCycle = 750;
-  			strcpy(tInfo.msg_buf, "Brightness: 75%");
+  			strncpy(tInfo.msg_buf, "Brightness: 75%", MAX_STR_LEN);
   			break;
 
   		case 2:
   			newDutyCycle = 500;
-  			strcpy(tInfo.msg_buf, "Brightness: 50%");
+  			strncpy(tInfo.msg_buf, "Brightness: 50%", MAX_STR_LEN);
   			break;
 
   		case 3:
   			newDutyCycle = 250;
-  			strcpy(tInfo.msg_buf, "Brightness: 25%");
+  			strncpy(tInfo.msg_buf, "Brightness: 25%", MAX_STR_LEN);
   			break;
 
   	    default:
   			newDutyCycle = 0;
-  			strcpy(tInfo.msg_buf, "Brightness: 0%");
+  			strncpy(tInfo.msg_buf, "Brightness: 0%", MAX_STR_LEN);
   			break;
   	    }
 
@@ -634,10 +635,7 @@ void IOControlTask(void *argument)
   	    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
 
   	    /* Add message to Queue */
-  	    if (osMessageQueuePut(logQueueHandle, (void*)&tInfo, 0, 100) != osOK)
-  	    {
-  	    	/* Error Handling */
-  	    }
+  	    osMessageQueuePut(logQueueHandle, (void*)&tInfo, 0, 100);
 
       }
   	  else if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
@@ -645,7 +643,7 @@ void IOControlTask(void *argument)
   		if (!buttonReleased)
   			buttonReleased = true;
   	  }
-  	osDelay(1);
+  	osDelay(pdMS_TO_TICKS(1));
   }
   /* USER CODE END 5 */
 }
@@ -663,6 +661,11 @@ void StartDisplayTask(void *argument)
   ThreadInfo tInfo;
   osStatus_t status;
 
+  mcpr_LCD_ClearDisplay(LCD_BLACK);
+
+  mcpr_LCD_WriteString(10, 20, LCD_WHITE, LCD_BLACK, "Task 1: ");
+  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 2: ");
+
   /* Infinite loop */
   for(;;)
   {
@@ -678,15 +681,15 @@ void StartDisplayTask(void *argument)
 			  {
 				  /* Task1 will be printed on y: 100 to 120*/
 				  mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
-				  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 1: ");
-				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
+				  mcpr_LCD_WriteString(10, 20, LCD_WHITE, LCD_BLACK, "Task 1: ");
+				  mcpr_LCD_WriteString(100, 20, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
 			  }
-			  else if (strcmp(tInfo.threadName, myTask03_attributes.name) == 0)
+			  /*else*/ if (strcmp(tInfo.threadName, myTask03_attributes.name) == 0)
 			  {
 				  /* Task1 will be printed on y: 140 to 160*/
-				  mcpr_LCD_ClearLine(140, 160, LCD_BLACK);
-				  mcpr_LCD_WriteString(10, 140, LCD_WHITE, LCD_BLACK, "Task 2: ");
-				  mcpr_LCD_WriteString(130, 100, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
+				  mcpr_LCD_ClearLine(100, 160, LCD_BLACK);
+				  mcpr_LCD_WriteString(10, 100, LCD_WHITE, LCD_BLACK, "Task 2: ");
+				  mcpr_LCD_WriteString(100, 100, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
 			  }
 		  }
 		  else if (status == osErrorTimeout)

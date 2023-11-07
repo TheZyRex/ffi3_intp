@@ -9,7 +9,7 @@
 
 #define LCD_BACKGROUND 0xFFFF
 #define LCD_BLACK 0x0000
-#define LCD_WHITE 0x0000
+#define LCD_WHITE 0xFFFF
 
 extern void mcpr_LCD_WriteData(uint16_t data);
 extern void mcpr_LCD_WriteCommand(uint16_t data);

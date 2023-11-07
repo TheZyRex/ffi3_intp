@@ -22,11 +22,11 @@ void mcpr_LCD_InitPorts(void)
 	
 	// benoetigte Datenleitungen und Steuerleitung zuruecksetzen falls zuvor noch nicht geschehen
 	// 0b0000 0011 0000 0000 0011 0000 0011 0000
-	GPIOD->MODER &= 0x03003030;
+	GPIOD->MODER &= 0x0F003030;
 	
 	// Datenleitungen und Steuerleitungen neusetzen
-	// 0b0101 0100 0101 0101 0100 0101 0100 0101
-	GPIOD->MODER |= 0x54554545;
+	// 0b0101 0000 0101 0101 0100 0101 0100 0101
+	GPIOD->MODER |= 0x50554545;
 	
 	// GPIOE Daten u. Steuerleitung zuruecksetzen
 	// 0b0000 0000 0000 0000 0011 1111 0011 1111
