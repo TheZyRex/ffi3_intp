@@ -35,21 +35,12 @@ typedef struct log_queue_msg
 {
   char msg_buf[MAX_STR_LEN];
   char threadName[MAX_STR_LEN];
-  uint8_t prio;
 } ThreadInfo;
-
-typedef enum msg_prio
-{
-	PRIO_HIGH,
-	PRIO_LOW,
-	PRIO_NORM,
-} msg_prio_t;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 
 /* USER CODE END PD */
 
@@ -680,11 +671,16 @@ void StartDisplayTask(void *argument)
 			  if (strcmp(tInfo.threadName, displayTask_attributes.name) == 0)
 			  {
 				  /* Task1 will be printed on y: 100 to 120*/
-				  mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
-				  mcpr_LCD_WriteString(10, 20, LCD_WHITE, LCD_BLACK, "Task 1: ");
-				  mcpr_LCD_WriteString(100, 20, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
+
+				  /* Das funktioniert aktuell nicht, hatte allerdings auch keine
+				   * Zeit mich damit mehr zu beschäftigen...
+				   */
+
+				  //mcpr_LCD_ClearLine(100, 120, LCD_BLACK);
+				  //mcpr_LCD_WriteString(10, 20, LCD_WHITE, LCD_BLACK, "Task 1: ");
+				  //mcpr_LCD_WriteString(100, 20, LCD_WHITE, LCD_BLACK, tInfo.msg_buf);
 			  }
-			  /*else*/ if (strcmp(tInfo.threadName, myTask03_attributes.name) == 0)
+			  else if (strcmp(tInfo.threadName, myTask03_attributes.name) == 0)
 			  {
 				  /* Task1 will be printed on y: 140 to 160*/
 				  mcpr_LCD_ClearLine(100, 160, LCD_BLACK);
