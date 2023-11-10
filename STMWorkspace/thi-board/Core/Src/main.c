@@ -73,10 +73,10 @@ const osThreadAttr_t displayTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
-/* Definitions for myTask03 */
-osThreadId_t myTask03Handle;
-const osThreadAttr_t myTask03_attributes = {
-  .name = "myTask03",
+/* Definitions for readMsCounter */
+osThreadId_t readMsCounterHandle;
+const osThreadAttr_t readMsCounter_attributes = {
+  .name = "readMsCounter",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
@@ -152,6 +152,7 @@ int main(void)
   mcpr_LCD_Init();
 
   HAL_TIM_Base_Start(&htim7);
+
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
@@ -187,8 +188,8 @@ int main(void)
   /* creation of displayTask */
   displayTaskHandle = osThreadNew(StartDisplayTask, NULL, &displayTask_attributes);
 
-  /* creation of myTask03 */
-  myTask03Handle = osThreadNew(StartTask03, NULL, &myTask03_attributes);
+  /* creation of readMsCounter */
+  readMsCounterHandle = osThreadNew(StartTask03, NULL, &readMsCounter_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -626,7 +627,10 @@ void IOControlTask(void *argument)
   	    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, newDutyCycle);
 
   	    /* Add message to Queue */
-  	    osMessageQueuePut(logQueueHandle, (void*)&tInfo, 0, 100);
+  	    if(osMessageQueuePut(logQueueHandle, (void*)&tInfo, 0, 100) != osOK)
+  	    {
+  	    	// Error Handling
+  	    }
 
       }
   	  else if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
